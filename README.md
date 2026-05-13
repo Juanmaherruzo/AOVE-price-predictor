@@ -143,6 +143,18 @@ python AOVE_predictor.py \
 
 ---
 
+## Citation
+If you use this work in your research, please cite:
+
+@software{herruzo2026aove,
+  author  = {Herruzo, Juan Manuel},
+  title   = {AOVE Oracle: Weekly EVOO Price Predictor},
+  year    = {2026},
+  url     = {https://github.com/Juanmaherruzo/AOVE-price-predictor}
+}
+
+---
+
 ## Contact
 
 **Juan Manuel Herruzo**  

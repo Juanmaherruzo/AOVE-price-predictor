@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+*.pyo
+*.ipynb
+.ipynb_checkpoints/
+aove_diagnostics_*/
+pdf_cache/
+*.log
+.git/

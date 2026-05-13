@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  aove-oracle:
+    build: .
+    container_name: aove-oracle
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount data folder so you can update CSVs without rebuilding
+      - ./data:/app/data
+      # Mount model so you can swap checkpoints without rebuilding
+      - ./best_aove_model.pth:/app/best_aove_model.pth
+    restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1

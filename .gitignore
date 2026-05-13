@@ -1,0 +1,30 @@
+# Model checkpoint — not distributed publicly
+AOVE_model/best_aove_model.pth
+*.pth
+*.pt
+
+# Proprietary datasets
+data/climate_dataset.csv
+data/macro_dataset.csv
+data/precio_historico.csv
+
+# Raw source PDFs
+data/Olive_price/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+
+# Jupyter
+.virtual_documents/
+
+# Env / IDE
+.env
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.claude/

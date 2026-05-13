@@ -150,7 +150,7 @@ If you use this work in your research, please cite:
   author  = {Herruzo, Juan Manuel},
   title   = {AOVE Oracle: Weekly EVOO Price Predictor},
   year    = {2026},
-  url     = {https://github.com/Juanmaherruzo/AOVE-price-predictor}
+  url     = {[https://github.com/Juanmaherruzo/AOVE-price-predictor](https://github.com/Juanmaherruzo/AOVE-price-predictor)}
 }
 
 ---

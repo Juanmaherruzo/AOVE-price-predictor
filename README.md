@@ -4,7 +4,7 @@
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.3-EE4C2C?logo=pytorch&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)
-![License](https://img.shields.io/badge/License-All%20rights%20reserved-red)
+![License](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey)
 
 A production-grade weekly forecast system for Extra Virgin Olive Oil (EVOO) origin prices in Andalusia, Spain. The model ingests current market price, spatially aggregated climate data and macroeconomic indicators, and returns a point prediction with an 80% confidence interval for the following week.
 

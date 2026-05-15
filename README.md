@@ -6,7 +6,7 @@
 ![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)
 ![License](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey)
 
-![AOVE Oracle dashboard](Use_example.png)
+![AOVE Oracle dashboard](docs/Use_example.png)
 
 ---
 
@@ -64,12 +64,16 @@ Monte Carlo Dropout (Gal & Ghahramani, 2016) provides the confidence interval: 2
 .
 ├── api.py                      # FastAPI REST server (self-contained)
 ├── AOVE_predictor.py           # CLI inference interface
-├── AOVE_training.ipynb         # Full training pipeline (model + visualisations)
-├── AOVE_data_prepare.ipynb     # ETL and dataset assembly
-├── AOVE_predictor.ipynb        # Interactive prediction notebook
-├── AOVE_api.ipynb              # API usage examples
 ├── dashboard.html              # Single-page frontend (served by FastAPI)
+├── requirements.txt
 ├── Pipeline_architecture_AOVE.svg
+├── notebooks/
+│   ├── AOVE_training.ipynb     # Full training pipeline (model + visualisations)
+│   ├── AOVE_data_prepare.ipynb # ETL and dataset assembly
+│   ├── AOVE_predictor.ipynb    # Interactive prediction notebook
+│   └── AOVE_api.ipynb          # API usage examples
+├── docs/
+│   └── Use_example.png
 ├── Docker/
 │   ├── Dockerfile
 │   ├── docker-compose.yml

@@ -29,6 +29,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -264,6 +265,13 @@ class PredictionResponse(BaseModel):
     trend_signal:        str  = Field(description="UP or DOWN vs current week")
     confidence_pct:      int  = Field(description="Directional confidence 5-95%")
     mae_reference:       float = Field(description="Model validation MAE (EUR/kg) for context")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.mount("/static", StaticFiles(directory="."), name="static")
 

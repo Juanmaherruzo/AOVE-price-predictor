@@ -6,6 +6,10 @@
 ![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)
 ![License](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey)
 
+![AOVE Oracle dashboard](Use_example.png)
+
+---
+
 A production-grade weekly forecast system for Extra Virgin Olive Oil (EVOO) origin prices in Andalusia, Spain. The model ingests current market price, spatially aggregated climate data and macroeconomic indicators, and returns a point prediction with an 80% confidence interval for the following week.
 
 ---
@@ -69,7 +73,8 @@ Monte Carlo Dropout (Gal & Ghahramani, 2016) provides the confidence interval: 2
 ├── Docker/
 │   ├── Dockerfile
 │   ├── docker-compose.yml
-│   └── requirements.txt
+│   ├── requirements.txt
+│   └── .dockerignore
 └── AOVE_model/
     ├── 01_learning_curve.png
     ├── 02_pred_vs_actual.png
@@ -129,6 +134,12 @@ python AOVE_predictor.py \
   --climate  ./data/climate_dataset.csv \
   --macro    ./data/macro_dataset.csv
 ```
+
+---
+
+## Live demo
+
+> Deployment coming soon — the API will be hosted on [Hugging Face Spaces](https://huggingface.co/spaces), [Render](https://render.com) or [Railway](https://railway.app). A public URL will appear here once live.
 
 ---
 

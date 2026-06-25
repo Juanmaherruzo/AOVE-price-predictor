@@ -95,7 +95,7 @@ Monte Carlo Dropout (Gal & Ghahramani, 2016) provides the confidence interval: 2
 ### Run locally
 
 ```bash
-pip install fastapi uvicorn
+pip install -r requirements.txt
 uvicorn api:app --reload --port 8000
 ```
 

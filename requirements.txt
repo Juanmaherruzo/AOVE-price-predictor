@@ -12,3 +12,4 @@ scikit-learn==1.5.0
 # Notebooks
 matplotlib==3.9.0
 ipykernel==6.29.0
+requests==2.32.3         # data ingestion (AOVE_data_prepare.ipynb: Open-Meteo, INE APIs)

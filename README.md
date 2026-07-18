@@ -62,28 +62,24 @@ Monte Carlo Dropout (Gal & Ghahramani, 2016) provides the confidence interval: 2
 
 ```
 .
-├── api.py                      # FastAPI REST server (self-contained)
-├── AOVE_predictor.py           # CLI inference interface
+├── aove/                       # Installable package — single source of truth
+│   ├── config.py               # Paths, feature columns, hyperparameters
+│   ├── model.py                # Bimodal LSTM (AOVEPricePredictor)
+│   ├── etl.py                  # Spatial climate aggregation + macro alignment
+│   ├── features.py             # Temporal sequence builder (leakage-free split)
+│   ├── inference.py            # Model loading + MC-Dropout sampling
+│   ├── cli.py                  # Interactive CLI            -> aove-cli
+│   ├── api.py                  # FastAPI server             -> aove.api:app
+│   ├── training.py             # Trainer + fine-tuner       -> aove-train
+│   ├── visualise.py            # Diagnostic plots
+│   └── data_prepare.py         # Data ingestion             -> aove-prepare
+├── tests/                      # pytest suite (model, ETL, features, inference)
 ├── dashboard.html              # Single-page frontend (served by FastAPI)
-├── requirements.txt
+├── pyproject.toml              # Packaging, dependencies, tool config
 ├── Pipeline_architecture_AOVE.svg
-├── notebooks/
-│   ├── AOVE_training.ipynb     # Full training pipeline (model + visualisations)
-│   ├── AOVE_data_prepare.ipynb # ETL and dataset assembly
-│   ├── AOVE_predictor.ipynb    # Interactive prediction notebook
-│   └── AOVE_api.ipynb          # API usage examples
-├── docs/
-│   └── Use_example.png
-├── Docker/
-│   ├── Dockerfile
-│   ├── docker-compose.yml
-│   ├── requirements.txt
-│   └── .dockerignore
-└── AOVE_model/
-    ├── 01_learning_curve.png
-    ├── 02_pred_vs_actual.png
-    ├── 03_residuals.png
-    └── 04_metrics_dashboard.png
+├── docs/Use_example.png
+├── Docker/                     # Dockerfile, docker-compose.yml, .dockerignore
+└── AOVE_model/                 # Diagnostic plots (01-04 .png)
 ```
 
 > The trained checkpoint (`best_aove_model.pth`) and proprietary datasets are **not included**. See [MODEL_NOT_INCLUDED.md](MODEL_NOT_INCLUDED.md).
@@ -92,11 +88,20 @@ Monte Carlo Dropout (Gal & Ghahramani, 2016) provides the confidence interval: 2
 
 ## API
 
+### Install
+
+```bash
+# with pip
+pip install -e ".[dev]"
+
+# or with uv (faster)
+uv venv && uv pip install -e ".[dev]"
+```
+
 ### Run locally
 
 ```bash
-pip install -r requirements.txt
-uvicorn api:app --reload --port 8000
+uvicorn aove.api:app --reload --port 8000
 ```
 
 ### Run with Docker
@@ -130,13 +135,16 @@ Swagger UI at `http://localhost:8000/docs`.
 }
 ```
 
-### CLI
+### Command-line tools
+
+Installing the package exposes three console entry points (paths are read from
+`aove/config.py`, overridable in code):
 
 ```bash
-python AOVE_predictor.py \
-  --model    ./AOVE_model/best_aove_model.pth \
-  --climate  ./data/climate_dataset.csv \
-  --macro    ./data/macro_dataset.csv
+aove-cli                                         # interactive weekly prediction
+aove-train --epochs 200                          # train the base model
+aove-train --finetune                            # fine-tune the FC head
+aove-prepare --poolred-csv ./data/precio_historico.csv   # rebuild datasets
 ```
 
 ---
@@ -155,6 +163,7 @@ python AOVE_predictor.py \
 | Data processing | pandas, NumPy, scikit-learn |
 | API | FastAPI + Uvicorn / Gunicorn |
 | Containerisation | Docker + docker-compose |
+| Quality | ruff, black, mypy (strict), pytest |
 
 ---
 

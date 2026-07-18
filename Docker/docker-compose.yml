@@ -1,16 +1,18 @@
-version: "3.9"
-
 services:
   aove-oracle:
-    build: .
+    build:
+      # Build context is the repository root so the aove/ package and
+      # pyproject.toml are available to the Dockerfile.
+      context: ..
+      dockerfile: Docker/Dockerfile
     container_name: aove-oracle
     ports:
       - "8000:8000"
     volumes:
-      # Mount data folder so you can update CSVs without rebuilding
-      - ./data:/app/data
-      # Mount model so you can swap checkpoints without rebuilding
-      - ./best_aove_model.pth:/app/best_aove_model.pth
+      # Mount data folder so you can update CSVs without rebuilding.
+      - ../data:/app/data
+      # Mount the checkpoint so you can swap it without rebuilding.
+      - ../AOVE_model/best_aove_model.pth:/app/AOVE_model/best_aove_model.pth
     restart: unless-stopped
     environment:
       - PYTHONUNBUFFERED=1

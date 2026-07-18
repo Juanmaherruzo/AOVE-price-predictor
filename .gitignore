@@ -28,3 +28,13 @@ venv/
 dist/
 build/
 .claude/
+
+# Tooling caches
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+
+# Training artefacts
+aove_diagnostics_*/
+plots/

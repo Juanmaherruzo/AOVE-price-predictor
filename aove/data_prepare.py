@@ -9,7 +9,7 @@ import logging
 import time
 from datetime import date
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, ClassVar
 
 import numpy as np
 import pandas as pd
@@ -55,7 +55,7 @@ class OpenMeteoDownloader:
 
     def _get(
         self, params: dict[str, str | float], retries: int = 3
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """GET with exponential backoff."""
         for attempt in range(retries):
             try:
@@ -246,7 +246,7 @@ class PoolRedLoader:
 class DieselLoader:
     """Load agricultural diesel prices (CSV if available, MITECO proxy otherwise)."""
 
-    ANNUAL_PROXY: dict[int, float] = {
+    ANNUAL_PROXY: ClassVar[dict[int, float]] = {
         2010: 0.682,
         2011: 0.789,
         2012: 0.820,
@@ -266,7 +266,7 @@ class DieselLoader:
     }
 
     @staticmethod
-    def load(csv_path: Optional[Path], start: date, end: date) -> pd.DataFrame:
+    def load(csv_path: Path | None, start: date, end: date) -> pd.DataFrame:
         """Return monthly columns: reference_date, diesel_price_eur."""
         if csv_path and csv_path.exists():
             df = pd.read_csv(csv_path, parse_dates=["reference_date"])
@@ -301,7 +301,7 @@ class DieselLoader:
 class AICALoader:
     """Load monthly olive oil stocks (AICA CSVs, else a seasonal proxy)."""
 
-    ANNUAL_STOCK_KT: dict[int, int] = {
+    ANNUAL_STOCK_KT: ClassVar[dict[int, int]] = {
         2010: 520,
         2011: 480,
         2012: 610,
@@ -319,7 +319,7 @@ class AICALoader:
         2024: 480,
         2025: 650,
     }
-    SEASONAL_OFFSET: dict[int, int] = {
+    SEASONAL_OFFSET: ClassVar[dict[int, int]] = {
         1: 5,
         2: 3,
         3: 1,
@@ -335,7 +335,7 @@ class AICALoader:
     }
 
     @staticmethod
-    def load(aica_dir: Optional[Path], start: date, end: date) -> pd.DataFrame:
+    def load(aica_dir: Path | None, start: date, end: date) -> pd.DataFrame:
         """Return monthly columns: reference_date, stock_delta_pct."""
         if aica_dir and aica_dir.is_dir() and list(aica_dir.glob("*.csv")):
             return AICALoader._from_dir(aica_dir)
@@ -378,7 +378,7 @@ class AICALoader:
     @staticmethod
     def _proxy(start: date, end: date) -> pd.DataFrame:
         rows: list[dict[str, object]] = []
-        prev: Optional[float] = None
+        prev: float | None = None
         current = date(start.year, 1, 1)
         end_proxy = date(end.year, 12, 1)
         last_year = max(AICALoader.ANNUAL_STOCK_KT)
@@ -410,7 +410,7 @@ class AICALoader:
 class DatasetAssembler:
     """Combine all feeds into the two production CSVs (no look-ahead bias)."""
 
-    SURFACE_ANNUAL: dict[int, float] = {
+    SURFACE_ANNUAL: ClassVar[dict[int, float]] = {
         2010: 0.6,
         2011: 0.7,
         2012: 0.9,

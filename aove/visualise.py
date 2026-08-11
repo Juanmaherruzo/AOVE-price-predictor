@@ -174,7 +174,12 @@ class AOVEVisualiser:
         colors = ["#2563eb", "#7c3aed", "#db2777", "#16a34a"]
 
         fig, axes = plt.subplots(1, 4, figsize=(12, 3))
-        for ax, label, value, fmt, color in zip(axes, labels, values, fmts, colors):
+        # strict=True: fmts and colors are hand-maintained alongside the metric
+        # dict, so adding a metric without extending them should fail loudly
+        # rather than silently drop the new panel.
+        for ax, label, value, fmt, color in zip(
+            axes, labels, values, fmts, colors, strict=True
+        ):
             ax.set_facecolor(color + "18")
             ax.set_xlim(0, 1)
             ax.set_ylim(0, 1)

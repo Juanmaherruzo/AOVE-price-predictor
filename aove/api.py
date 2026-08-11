@@ -4,7 +4,6 @@ import logging
 import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import Optional
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException
@@ -30,9 +29,9 @@ _MAE_PERSISTENCE_BASELINE = 0.057
 class _State:
     """Container for the objects loaded once at startup."""
 
-    model: Optional[AOVEPricePredictor] = None
-    df_climate: Optional[pd.DataFrame] = None
-    df_macro: Optional[pd.DataFrame] = None
+    model: AOVEPricePredictor | None = None
+    df_climate: pd.DataFrame | None = None
+    df_macro: pd.DataFrame | None = None
 
 
 state = _State()

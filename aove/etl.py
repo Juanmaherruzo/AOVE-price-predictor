@@ -36,7 +36,7 @@ class MarketETLPipeline:
             return pd.Series(w_avg, index=climate_cols)
 
         df_agg = (
-            df_municipal.groupby("date")[climate_cols + ["surface_ha"]]
+            df_municipal.groupby("date")[[*climate_cols, "surface_ha"]]
             .apply(weighted_avg, include_groups=False)
             .reset_index()
         )
@@ -82,7 +82,7 @@ class MarketETLPipeline:
         df_climate = df_climate.sort_index()
         df_final = pd.merge_asof(
             left=df_climate,
-            right=df_macro_shifted[macro_feature_cols + ["aove_price_eur_kg"]],
+            right=df_macro_shifted[[*macro_feature_cols, "aove_price_eur_kg"]],
             left_index=True,
             right_index=True,
             direction="backward",

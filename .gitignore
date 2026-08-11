@@ -27,7 +27,6 @@ venv/
 *.egg-info/
 dist/
 build/
-.claude/
 
 # Tooling caches
 .mypy_cache/

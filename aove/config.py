@@ -5,10 +5,17 @@ truth, replacing the module-level constants that were previously duplicated
 across the API, CLI and training scripts.
 """
 
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
 import torch
+
+# Repository root, resolved from this file rather than the working directory, so
+# the installed console scripts (aove-cli, aove-train, aove-prepare,
+# aove-benchmark) work from anywhere. Override with AOVE_ROOT when the data and
+# checkpoint live outside the source tree — that is what the Docker image does.
+PROJECT_ROOT = Path(os.environ.get("AOVE_ROOT", Path(__file__).resolve().parents[1]))
 
 # Feature catalogue — shared by training, inference and the API.
 HF_COLS: list[str] = [
@@ -41,9 +48,18 @@ def resolve_device() -> torch.device:
 class Settings:
     """Immutable runtime configuration for paths and hyperparameters."""
 
-    checkpoint_path: Path = field(default=Path("AOVE_model/best_aove_model.pth"))
-    climate_path: Path = field(default=Path("data/climate_dataset.csv"))
-    macro_path: Path = field(default=Path("data/macro_dataset.csv"))
+    checkpoint_path: Path = field(
+        default_factory=lambda: PROJECT_ROOT / "AOVE_model" / "best_aove_model.pth"
+    )
+    climate_path: Path = field(
+        default_factory=lambda: PROJECT_ROOT / "data" / "climate_dataset.csv"
+    )
+    macro_path: Path = field(
+        default_factory=lambda: PROJECT_ROOT / "data" / "macro_dataset.csv"
+    )
+    dashboard_path: Path = field(
+        default_factory=lambda: PROJECT_ROOT / "dashboard.html"
+    )
     time_steps: int = 104
     train_ratio: float = 0.8
     mc_samples: int = 200

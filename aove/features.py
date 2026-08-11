@@ -18,6 +18,17 @@ class TemporalSequenceBuilder:
     derived from the dataframe split index so both share the same temporal
     boundary (``split_seq_idx = df_split_idx - time_steps``), guaranteeing that
     no training window predicts a validation-period target.
+
+    Alignment for a target at row ``t``:
+
+    - ``x_hf`` is the climate window ``[t - time_steps, t - 1]``. Week ``t``'s
+      own weather is excluded — it is not observable at forecast time.
+    - ``x_macro`` is the macro row at ``t``. Those columns are lagged at source
+      (publication delay in the ETL, plus ``aove_lag_weeks`` on the price), so
+      reading row ``t`` yields the intended one-week price lag rather than
+      compounding the shift.
+
+    ``tests/test_features.py::test_macro_lag_is_exactly_one_week`` pins this.
     """
 
     def __init__(self, time_steps: int = 104) -> None:
@@ -65,11 +76,19 @@ class TemporalSequenceBuilder:
         )
 
         # Zero-copy sliding window view; drop the last window (it has no target).
+        # The climate window for target row t ends at t-1: week t's own weather is
+        # not observable when the forecast is made.
         hf_windows = np.lib.stride_tricks.sliding_window_view(
             hf_scaled, window_shape=self.time_steps, axis=0
         )
         x_hf = hf_windows[:-1].transpose(0, 2, 1).copy()
-        x_macro = macro_scaled[self.time_steps - 1 : n - 1]
+        # The macro snapshot is taken from row t itself, not t-1. Every macro
+        # column is already lagged at source: the bulletin figures carry a
+        # publication delay applied in the ETL, and ``aove_lag_price`` is the
+        # target shifted by ``aove_lag_weeks``. Reading row t-1 here applied the
+        # shift a second time, so the model saw a price two weeks stale while
+        # the configuration and the docs both claimed one.
+        x_macro = macro_scaled[self.time_steps : n]
         y = target_scaled[self.time_steps :]
 
         split_seq_idx = df_split_idx - self.time_steps

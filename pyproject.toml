@@ -35,6 +35,7 @@ dev = [
 aove-cli = "aove.cli:main"
 aove-train = "aove.training:main"
 aove-prepare = "aove.data_prepare:main"
+aove-benchmark = "aove.benchmark:main"
 
 [project.urls]
 Repository = "https://github.com/Juanmaherruzo/AOVE-price-predictor"

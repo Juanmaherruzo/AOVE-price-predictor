@@ -10,22 +10,46 @@
 
 ---
 
-A production-grade weekly forecast system for Extra Virgin Olive Oil (EVOO) origin prices in Andalusia, Spain. The model ingests current market price, spatially aggregated climate data and macroeconomic indicators, and returns a point prediction with an 80% confidence interval for the following week.
+A weekly forecast system for Extra Virgin Olive Oil (EVOO) origin prices in Andalusia, Spain. The model ingests the current market price, spatially aggregated climate data and macroeconomic indicators, and returns a point prediction with an 80% confidence interval for the following week.
+
+**Read the results section before the architecture section.** The headline is a negative result, reported deliberately: the model does not beat a naive baseline.
 
 ---
 
 ## Results
 
-| Metric | Validation set |
-|---|---|
-| MAE | **0.204 EUR/kg** |
-| RMSE | 0.269 EUR/kg |
-| MAPE | **3.78 %** |
-| R² | **0.943** |
+Every number below is measured on the same chronological hold-out — the last 20% of the series, 171 weeks from 2023-01-23 to 2026-04-27. Scalers are fitted on the training split only.
 
-Validation was performed on a chronological hold-out (last 20% of the time series, ~2 years). No data leakage — scalers are fitted exclusively on the training split.
+| Predictor | MAE (EUR/kg) | RMSE | MAPE | R² |
+|---|---|---|---|---|
+| **Persistence** (repeat last week's price) | **0.057** | **0.130** | **0.95 %** | **0.987** |
+| Random walk with drift | 0.058 | 0.130 | 0.96 % | 0.987 |
+| Bimodal LSTM (this project) | 0.073 | 0.151 | 1.23 % | 0.982 |
+
+**The LSTM does not beat persistence.** Its skill score — the fractional MAE reduction over the naive baseline — is **−27.7%**: the model is about a quarter *worse* than predicting that next week's price equals this week's.
+
+### Why this is the headline
+
+Weekly EVOO origin prices are close to a random walk. A model that is handed last week's price as an input feature — as this one is — will score a high R² by learning little more than "repeat the input". An R² of 0.98 on this task is what *doing nothing* achieves, so quoting it as a result would be meaningless. Reproduce the comparison yourself:
+
+```bash
+aove-benchmark --json benchmark.json
+```
+
+### What changed, and what it cost
+
+An earlier version of this README reported MAE 0.204 EUR/kg and R² 0.943 with no baseline. Adding the baseline exposed two things:
+
+1. **A temporal alignment bug.** `aove_lag_price` is shifted one week in the ETL, and the sequence builder was *also* reading the macro row at `t-1` — so the model saw a price two weeks stale while the config and docstrings both claimed one week. Fixing it (`features.py`) cut validation MAE from 0.147 to 0.073, roughly halving the error. Two regression tests now pin the alignment (`tests/test_features.py`).
+2. **The comparison that was missing.** Even after the fix, persistence still wins. That is the honest state of the project.
+
+### Where the model could still earn its place
+
+The persistence baseline is unbeatable on price *level* but says nothing useful about price *change*, which is what a mill or a cooperative actually needs. The natural next step is to retarget the model on the weekly delta and score it against "delta = 0" and against directional accuracy vs. a coin flip. Until that is done, this repository is best read as a complete, tested ETL-to-API pipeline with an honest evaluation, not as a forecasting result.
 
 ### Diagnostic plots
+
+Generated from the corrected model (`aove-train`), on the same validation split.
 
 | Learning curve | Predicted vs Actual |
 |---|---|
@@ -106,13 +130,23 @@ uvicorn aove.api:app --reload --port 8000
 
 ### Run with Docker
 
+The image contains the code only. The checkpoint and the CSV datasets are not
+redistributed, so `docker-compose.yml` mounts them from your working copy —
+place them at `AOVE_model/best_aove_model.pth` and `data/` first, then:
+
 ```bash
 cd Docker
 docker compose up --build
 ```
 
+Without those files the container starts and `/health` reports `degraded`,
+listing which artefacts are missing.
+
 The dashboard is available at `http://localhost:8000/dashboard`.  
 Swagger UI at `http://localhost:8000/docs`.
+
+CORS defaults to the dashboard's own origin; override with
+`AOVE_CORS_ORIGINS=https://example.org` if you serve the frontend elsewhere.
 
 ### POST `/predict`
 
@@ -131,17 +165,23 @@ Swagger UI at `http://localhost:8000/docs`.
   "trend_signal": "DOWN",
   "confidence_pct": 62,
   "prediction_week": "2025-11-17",
-  "mae_reference": 0.204
+  "mae_reference": 0.073,
+  "mae_persistence_baseline": 0.057
 }
 ```
 
+`mae_persistence_baseline` is returned on every prediction so a client can see
+that the naive baseline is more accurate than the model on the validation split.
+
 ### Command-line tools
 
-Installing the package exposes three console entry points (paths are read from
-`aove/config.py`, overridable in code):
+Installing the package exposes four console entry points. Paths resolve against
+the repository root, so the commands work from any directory; set `AOVE_ROOT` to
+point them elsewhere.
 
 ```bash
 aove-cli                                         # interactive weekly prediction
+aove-benchmark                                   # model vs naive baselines
 aove-train --epochs 200                          # train the base model
 aove-train --finetune                            # fine-tune the FC head
 aove-prepare --poolred-csv ./data/precio_historico.csv   # rebuild datasets
@@ -168,14 +208,17 @@ aove-prepare --poolred-csv ./data/precio_historico.csv   # rebuild datasets
 ---
 
 ## Citation
+
 If you use this work in your research, please cite:
 
+```bibtex
 @software{herruzo2026aove,
-  author  = {Herruzo, Juan Manuel},
-  title   = {AOVE Oracle: Weekly EVOO Price Predictor},
-  year    = {2026},
-  url     = {[https://github.com/Juanmaherruzo/AOVE-price-predictor](https://github.com/Juanmaherruzo/AOVE-price-predictor)}
+  author = {Herruzo, Juan Manuel},
+  title  = {AOVE Oracle: Weekly EVOO Price Predictor},
+  year   = {2026},
+  url    = {https://github.com/Juanmaherruzo/AOVE-price-predictor}
 }
+```
 
 ---
 

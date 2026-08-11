@@ -37,6 +37,59 @@ def test_short_series_raises() -> None:
         )
 
 
+def test_macro_lag_is_exactly_one_week() -> None:
+    """The price the model sees must be week t-1, not t-2.
+
+    Regression test. ``aove_lag_price`` is already shifted by one week in the
+    ETL, so taking the macro row at t-1 shifted it twice and handed the model a
+    price two weeks stale. The persistence baseline built from that feature then
+    looked far weaker than a real one-week persistence, which flattered every
+    comparison against it.
+    """
+    n, steps = 12, 3
+    df = _dataframe(n)
+    # Make the price series identifiable: row i carries the value i.
+    df[TARGET_COL] = np.arange(n, dtype=float)
+    # aove_lag_price is the target shifted one week, as align_macro_data builds it.
+    df["aove_lag_price"] = df[TARGET_COL].shift(1).bfill()
+
+    builder = TemporalSequenceBuilder(time_steps=steps)
+    splits = builder.build_sequences_split(
+        df, HF_COLS, MACRO_COLS, TARGET_COL, train_ratio=0.75
+    )
+    x_macro_train, y_train = splits["train"][1], splits["train"][2]  # type: ignore[misc]
+
+    lag_idx = MACRO_COLS.index("aove_lag_price")
+    scaler = builder.scaler_macro
+    lag = x_macro_train[:, lag_idx] * scaler.scale_[lag_idx] + scaler.mean_[lag_idx]
+    target = builder.inverse_transform_target(y_train)
+
+    # Target at row t is t; the lag feature must therefore be t-1 exactly.
+    assert np.allclose(lag, target - 1.0, atol=1e-4)
+
+
+def test_climate_window_excludes_the_target_week() -> None:
+    """The climate window must end at t-1: week t's weather is not observable."""
+    n, steps = 12, 3
+    df = _dataframe(n)
+    df["rainfall_mm"] = np.arange(n, dtype=float)
+    df[TARGET_COL] = np.arange(n, dtype=float)
+
+    builder = TemporalSequenceBuilder(time_steps=steps)
+    splits = builder.build_sequences_split(
+        df, HF_COLS, MACRO_COLS, TARGET_COL, train_ratio=0.75
+    )
+    x_hf_train, y_train = splits["train"][0], splits["train"][2]  # type: ignore[misc]
+
+    rain_idx = HF_COLS.index("rainfall_mm")
+    scaler = builder.scaler_hf
+    last_step = (
+        x_hf_train[:, -1, rain_idx] * scaler.scale_[rain_idx] + scaler.mean_[rain_idx]
+    )
+    target = builder.inverse_transform_target(y_train)
+    assert np.allclose(last_step, target - 1.0, atol=1e-4)
+
+
 def test_inverse_transform_roundtrip() -> None:
     builder = TemporalSequenceBuilder(time_steps=3)
     builder.build_sequences_split(

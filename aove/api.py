@@ -1,9 +1,9 @@
 """FastAPI server exposing the AOVE weekly price predictor."""
 
 import logging
+import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from pathlib import Path
 from typing import Optional
 
 import pandas as pd
@@ -19,8 +19,12 @@ from aove.model import AOVEPricePredictor
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
-# Validation MAE from the training run, surfaced to clients for context.
-_MAE_REFERENCE = 0.204
+# Validation MAE of the model, surfaced to clients for context. The naive
+# persistence baseline scores 0.057 EUR/kg on the same split and is reported
+# alongside it so a client can see that the model does not beat it (see
+# aove.benchmark and the README results table).
+_MAE_REFERENCE = 0.073
+_MAE_PERSISTENCE_BASELINE = 0.057
 
 
 class _State:
@@ -62,10 +66,20 @@ app = FastAPI(
     version="1.0.0",
 )
 
+# Comma-separated list of allowed origins. Defaults to the bundled dashboard's
+# own origin; set AOVE_CORS_ORIGINS=* only for a throwaway public demo.
+_CORS_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get(
+        "AOVE_CORS_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000"
+    ).split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
+    allow_origins=_CORS_ORIGINS,
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
@@ -103,12 +117,21 @@ class PredictionResponse(BaseModel):
     trend_signal: str
     confidence_pct: int
     mae_reference: float
+    mae_persistence_baseline: float = Field(
+        default=_MAE_PERSISTENCE_BASELINE,
+        description=(
+            "Validation MAE of repeating last week's price. The model does not "
+            "beat it; both are returned so the prediction can be read in context."
+        ),
+    )
 
 
 @app.get("/dashboard")
 def dashboard() -> FileResponse:
     """Serve the static dashboard page."""
-    return FileResponse(Path("dashboard.html"))
+    if not settings.dashboard_path.exists():
+        raise HTTPException(status_code=404, detail="Dashboard asset not found.")
+    return FileResponse(settings.dashboard_path)
 
 
 @app.get("/health", tags=["System"])

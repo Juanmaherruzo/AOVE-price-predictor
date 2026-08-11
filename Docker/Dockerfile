@@ -17,10 +17,9 @@ COPY pyproject.toml ./
 COPY aove/ ./aove/
 RUN pip install --no-cache-dir .
 
-# Application assets. The checkpoint and the CSV datasets are NOT baked into the
-# image: they are not redistributed with this repository (see
-# MODEL_NOT_INCLUDED.md) and docker-compose.yml mounts them from the host at run
-# time. Copying them here would make `docker build` fail on a fresh clone.
+# Application assets. The checkpoint and the CSV datasets are not baked into the
+# image: docker-compose.yml mounts them from the host at run time so they can be
+# swapped without a rebuild. Keeping the image free of data also keeps it small.
 COPY dashboard.html ./
 RUN mkdir -p /app/data /app/AOVE_model
 

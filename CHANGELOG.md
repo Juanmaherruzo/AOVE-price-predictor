@@ -5,6 +5,37 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-08-11
+
+### Changed
+- **Relicensed to Apache 2.0.** The previous CC BY-NC 4.0 licence was not an
+  open-source licence, its NonCommercial clause blocked the exact evaluation the
+  project is published for, and GitHub could not detect it (the repository showed
+  as unlicensed). The "for commercial licensing, get in touch" framing is gone.
+- **The datasets and the trained checkpoint are now published.** Every source is
+  freely redistributable with attribution, so withholding them served no purpose
+  beyond making the results unverifiable. `aove-benchmark` now reproduces the
+  published table from a plain clone with no arguments.
+
+### Added
+- `DATA.md`: per-column provenance, licences and attribution.
+
+### Fixed
+- **Three macro columns were undocumented proxies.** `diesel_price_eur`,
+  `surface_delta_pct` and `stock_delta_pct` are hard-coded annual constants
+  defined in `data_prepare.py`, not downloaded data — 16, 11 and 27 distinct
+  values respectively across 850 weeks. The README presented all five macro
+  inputs as official bulletin data. Both the README and `DATA.md` now state
+  plainly which three are proxies, and note that a feature changing once a year
+  cannot carry week-scale information — part of why the model loses to
+  persistence.
+- The price loader was named `PoolRedLoader` while its docstring credited a MAPA
+  scraper; the actual source is the European Commission's weekly series. Renamed
+  to `EUPriceLoader`, with the `--poolred-csv` flag renamed to `--price-csv` and
+  the attribution corrected in the code, the dashboard and the docs.
+- Removed `MODEL_NOT_INCLUDED.md`, which claimed the checkpoint was withheld to
+  protect months of effort — an argument the benchmark had just disproved.
+
 ## [0.2.0] - 2026-08-11
 
 ### Fixed

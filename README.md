@@ -4,7 +4,7 @@
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.3-EE4C2C?logo=pytorch&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)
-![License](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey)
+![License](https://img.shields.io/badge/License-Apache%202.0-D22128)
 
 ![AOVE Oracle dashboard](docs/Use_example.png)
 
@@ -76,9 +76,13 @@ Monte Carlo Dropout (Gal & Ghahramani, 2016) provides the confidence interval: 2
 
 ### Data pipeline (ETL)
 
-- **Climate** — ERA5 weekly observations from 13 Andalusian municipalities, spatially aggregated by cultivated olive surface (weighted average).
-- **Macro** — MAPA/POOLred official bulletins: origin prices, olive stocks, planted surface variation, national CPI and diesel price. A 15-day publication lag is modelled explicitly with `merge_asof`.
-- The user supplies only the current week's POOLred price at inference time; everything else is pre-loaded.
+- **Climate** — ERA5-Land weekly observations for 13 Andalusian olive-growing locations (Open-Meteo archive API), spatially aggregated by cultivated olive surface (weighted average).
+- **EVOO origin price** — the weekly series published by the European Commission's agri-food data portal. This is the target, and its one-week lag is a model input.
+- **CPI** — INE monthly series, forward-filled onto the weekly grid. A 15-day publication lag is modelled explicitly with `merge_asof`.
+- **Diesel, olive stocks and planted surface** — ⚠️ **these three are hard-coded annual constants, not downloaded data.** They were stand-ins during the first build and were never replaced. Each changes once or twice a year, so none of them can carry week-scale information — which is part of why the model does not beat persistence.
+- At inference the user supplies only the current week's price; everything else is pre-loaded.
+
+Full provenance, licences and attribution: **[DATA.md](DATA.md)**.
 
 ---
 
@@ -96,17 +100,20 @@ Monte Carlo Dropout (Gal & Ghahramani, 2016) provides the confidence interval: 2
 │   ├── api.py                  # FastAPI server             -> aove.api:app
 │   ├── training.py             # Trainer + fine-tuner       -> aove-train
 │   ├── visualise.py            # Diagnostic plots
-│   └── data_prepare.py         # Data ingestion             -> aove-prepare
+│   ├── data_prepare.py         # Data ingestion             -> aove-prepare
+│   └── benchmark.py            # Baselines vs model         -> aove-benchmark
 ├── tests/                      # pytest suite (model, ETL, features, inference)
+├── data/                       # Published datasets (climate, macro, raw price)
+├── AOVE_model/                 # Trained checkpoint, diagnostics, benchmark.json
 ├── dashboard.html              # Single-page frontend (served by FastAPI)
 ├── pyproject.toml              # Packaging, dependencies, tool config
+├── DATA.md                     # Data provenance, licences and attribution
 ├── Pipeline_architecture_AOVE.svg
 ├── docs/Use_example.png
-├── Docker/                     # Dockerfile, docker-compose.yml, .dockerignore
-└── AOVE_model/                 # Diagnostic plots (01-04 .png)
+└── Docker/                     # Dockerfile, docker-compose.yml, .dockerignore
 ```
 
-> The trained checkpoint (`best_aove_model.pth`) and proprietary datasets are **not included**. See [MODEL_NOT_INCLUDED.md](MODEL_NOT_INCLUDED.md).
+> **Everything needed to reproduce the results is in the repository** — the datasets, the trained checkpoint and the benchmark script. Run `aove-benchmark` and check the numbers yourself. See [DATA.md](DATA.md) for where each column comes from.
 
 ---
 
@@ -130,17 +137,16 @@ uvicorn aove.api:app --reload --port 8000
 
 ### Run with Docker
 
-The image contains the code only. The checkpoint and the CSV datasets are not
-redistributed, so `docker-compose.yml` mounts them from your working copy —
-place them at `AOVE_model/best_aove_model.pth` and `data/` first, then:
+The image contains the code; `docker-compose.yml` mounts the checkpoint and the
+datasets from your working copy, so a plain clone has everything it needs:
 
 ```bash
 cd Docker
 docker compose up --build
 ```
 
-Without those files the container starts and `/health` reports `degraded`,
-listing which artefacts are missing.
+If either artefact is missing, the container still starts and `/health` reports
+`degraded`, listing what it could not find.
 
 The dashboard is available at `http://localhost:8000/dashboard`.  
 Swagger UI at `http://localhost:8000/docs`.
@@ -184,7 +190,7 @@ aove-cli                                         # interactive weekly prediction
 aove-benchmark                                   # model vs naive baselines
 aove-train --epochs 200                          # train the base model
 aove-train --finetune                            # fine-tune the FC head
-aove-prepare --poolred-csv ./data/precio_historico.csv   # rebuild datasets
+aove-prepare --price-csv ./data/precio_historico.csv   # rebuild datasets
 ```
 
 ---
@@ -222,9 +228,22 @@ If you use this work in your research, please cite:
 
 ---
 
+## Licence
+
+Code and datasets released under the **Apache License 2.0** — see [LICENSE](LICENSE).
+Use it, fork it, build on it, commercially or otherwise.
+
+Third-party data carries its own attribution requirements, listed in
+[DATA.md](DATA.md): ERA5-Land © Copernicus / ECMWF via Open-Meteo (CC BY 4.0),
+CPI © INE, EVOO price series © European Commission (Decision 2011/833/EU).
+
+---
+
 ## Contact
 
 **Juan Manuel Herruzo**  
 juanmherruzo@gmail.com
 
-For commercial licensing, API access or research collaboration, get in touch.
+Questions, corrections and pull requests are welcome — particularly on the
+retargeting described above, or if you have real MITECO diesel and AICA stock
+series to replace the three proxy columns.

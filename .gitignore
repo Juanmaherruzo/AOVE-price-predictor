@@ -1,14 +1,10 @@
-# Model checkpoint — not distributed publicly
-AOVE_model/best_aove_model.pth
+# Model checkpoints. best_aove_model.pth is the exception and is tracked: it is
+# 833 KB and without it nobody can reproduce the results table.
 *.pth
 *.pt
+!AOVE_model/best_aove_model.pth
 
-# Proprietary datasets
-data/climate_dataset.csv
-data/macro_dataset.csv
-data/precio_historico.csv
-
-# Raw source PDFs
+# Raw source PDFs (bulky; the derived CSVs in data/ are published instead)
 data/Olive_price/
 
 # Python

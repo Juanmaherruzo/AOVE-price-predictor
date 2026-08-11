@@ -1,7 +1,8 @@
 """Data ingestion pipeline: builds the climate and macro CSVs.
 
-Sources: Open-Meteo (climate, no API key), INE (monthly CPI), a MAPA PDF-scraper
-CSV (weekly AOVE price), and MITECO/AICA proxies for diesel and stocks.
+Sources: Open-Meteo (climate, no API key), INE (monthly CPI), a scraped
+European Commission CSV (weekly EVOO price), and hard-coded annual proxies
+for diesel and stocks. See DATA.md for provenance and licences.
 """
 
 import argparse
@@ -197,16 +198,23 @@ class INEDownloader:
         return df
 
 
-class PoolRedLoader:
-    """Load the weekly AOVE price CSV produced by the MAPA PDF scraper."""
+class EUPriceLoader:
+    """Load the weekly EVOO origin price series.
+
+    Source: the weekly olive oil prices published by the European Commission
+    (DG AGRI agri-food data portal), scraped from the published bulletins into
+    ``data/precio_historico.csv``. Reusable under Commission Decision
+    2011/833/EU with attribution — see ``DATA.md``.
+    """
 
     @staticmethod
     def load(csv_path: Path) -> pd.DataFrame:
         """Return weekly columns: reference_date, aove_price_eur_kg."""
         if not csv_path.exists():
             raise FileNotFoundError(
-                f"AOVE price CSV not found: {csv_path}\n"
-                "Run the MAPA PDF scraper first to generate it."
+                f"EVOO price CSV not found: {csv_path}\n"
+                "Expected the scraped European Commission weekly price series; "
+                "the repository ships one at data/precio_historico.csv."
             )
         df = pd.read_csv(csv_path, sep=None, engine="python", encoding="utf-8-sig")
         df.columns = [c.strip().lower() for c in df.columns]
@@ -502,7 +510,12 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="AOVE data collector (Open-Meteo edition)"
     )
-    parser.add_argument("--poolred-csv", type=Path, default=None)
+    parser.add_argument(
+        "--price-csv",
+        type=Path,
+        default=None,
+        help="Weekly EVOO price CSV (European Commission series).",
+    )
     parser.add_argument("--diesel-csv", type=Path, default=None)
     parser.add_argument("--aica-dir", type=Path, default=None)
     parser.add_argument("--start-date", type=str, default="2010-01-01")
@@ -527,13 +540,13 @@ def main() -> None:
 
     df_ipc = INEDownloader.download(start, end)
 
-    if not args.poolred_csv:
+    if not args.price_csv:
         logger.error(
-            "No AOVE price CSV provided (--poolred-csv) - macro_dataset.csv skipped."
+            "No EVOO price CSV provided (--price-csv) - macro_dataset.csv skipped."
         )
         raise SystemExit(1)
 
-    df_prices = PoolRedLoader.load(args.poolred_csv)
+    df_prices = EUPriceLoader.load(args.price_csv)
     df_diesel = DieselLoader.load(args.diesel_csv, start, end)
     df_stock = AICALoader.load(args.aica_dir, start, end)
     DatasetAssembler.build_macro_csv(

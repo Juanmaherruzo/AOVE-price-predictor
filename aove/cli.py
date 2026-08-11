@@ -51,7 +51,9 @@ class AOVEOracleCLI:
         display.info("  AOVE ORACLE - Weekly Price Predictor")
         display.info("=" * 52)
         while True:
-            raw = input("\n  Enter current POOLred/MAPA price (EUR/kg) [e.g. 4.85]: ")
+            raw = input(
+                "\n  Enter this week's EVOO origin price (EUR/kg) [e.g. 4.85]: "
+            )
             try:
                 price = float(raw.strip().replace(",", "."))
             except ValueError:

@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aove-price-predictor"
-version = "0.1.0"
+version = "0.3.0"
 description = "Bimodal LSTM for weekly Extra Virgin Olive Oil origin price prediction"
 authors = [{ name = "Juan Manuel Herruzo", email = "juanmherruzo@gmail.com" }]
-license = { text = "CC-BY-NC-4.0" }
+license = { text = "Apache-2.0" }
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115.0,<1.0.0",
